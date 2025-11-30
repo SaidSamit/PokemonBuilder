@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:padding="12dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tvPokemonName"
+            android:textSize="20sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+
+        <ImageView
+            android:id="@+id/ivSprite"
+            android:layout_marginTop="8dp"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:src="@android:drawable/ic_menu_gallery"/>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/ivCryPlay"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@android:drawable/ic_media_play"/>
+
+            <Button
+                android:id="@+id/btnRecordCry"
+                android:text="Grabar grito"
+                android:layout_marginStart="8dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <TextView android:text="Habilidad" android:layout_marginTop="12dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <Spinner android:id="@+id/spinnerAbilities" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <TextView android:text="EVs" android:layout_marginTop="12dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content">
+            <SeekBar android:id="@+id/ev0" android:max="252" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            <SeekBar android:id="@+id/ev1" android:max="252" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            <SeekBar android:id="@+id/ev2" android:max="252" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            <SeekBar android:id="@+id/ev3" android:max="252" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            <SeekBar android:id="@+id/ev4" android:max="252" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            <SeekBar android:id="@+id/ev5" android:max="252" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <TextView android:text="IVs" android:layout_marginTop="12dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="wrap_content">
+            <SeekBar android:id="@+id/iv0" android:max="31" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            <SeekBar android:id="@+id/iv1" android:max="31" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            <SeekBar android:id="@+id/iv2" android:max="31" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            <SeekBar android:id="@+id/iv3" android:max="31" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            <SeekBar android:id="@+id/iv4" android:max="31" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            <SeekBar android:id="@+id/iv5" android:max="31" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <TextView android:text="Movimientos" android:layout_marginTop="12dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <Button android:id="@+id/move0" android:text="Movimiento 1" android:layout_marginTop="6dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        <Button android:id="@+id/move1" android:text="Movimiento 2" android:layout_marginTop="6dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        <Button android:id="@+id/move2" android:text="Movimiento 3" android:layout_marginTop="6dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        <Button android:id="@+id/move3" android:text="Movimiento 4" android:layout_marginTop="6dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+        <Button android:id="@+id/btnSavePokemon" android:text="Guardar Pokémon" android:layout_marginTop="16dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+</ScrollView>

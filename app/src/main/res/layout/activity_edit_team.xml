@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:padding="12dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:id="@+id/etTeamName"
+            android:hint="Nombre del equipo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <GridLayout
+            android:columnCount="2"
+            android:rowCount="3"
+            android:layout_marginTop="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageButton android:id="@+id/slot0" android:layout_width="0dp" android:layout_height="120dp" android:layout_columnWeight="1" android:scaleType="centerCrop" android:src="@android:drawable/ic_input_add"/>
+            <ImageButton android:id="@+id/slot1" android:layout_width="0dp" android:layout_height="120dp" android:layout_columnWeight="1" android:scaleType="centerCrop" android:src="@android:drawable/ic_input_add"/>
+            <ImageButton android:id="@+id/slot2" android:layout_width="0dp" android:layout_height="120dp" android:layout_columnWeight="1" android:scaleType="centerCrop" android:src="@android:drawable/ic_input_add"/>
+            <ImageButton android:id="@+id/slot3" android:layout_width="0dp" android:layout_height="120dp" android:layout_columnWeight="1" android:scaleType="centerCrop" android:src="@android:drawable/ic_input_add"/>
+            <ImageButton android:id="@+id/slot4" android:layout_width="0dp" android:layout_height="120dp" android:layout_columnWeight="1" android:scaleType="centerCrop" android:src="@android:drawable/ic_input_add"/>
+            <ImageButton android:id="@+id/slot5" android:layout_width="0dp" android:layout_height="120dp" android:layout_columnWeight="1" android:scaleType="centerCrop" android:src="@android:drawable/ic_input_add"/>
+
+        </GridLayout>
+
+        <Button
+            android:id="@+id/btnSaveTeam"
+            android:text="Guardar equipo"
+            android:layout_marginTop="16dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
+</ScrollView>
