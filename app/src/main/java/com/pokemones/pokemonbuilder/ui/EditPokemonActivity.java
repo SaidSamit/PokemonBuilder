@@ -2,7 +2,6 @@ package com.pokemones.pokemonbuilder.ui;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.widget.ArrayAdapter;
@@ -18,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.pokemones.pokemonbuilder.R;
 import com.pokemones.pokemonbuilder.api.PokeApiClient;
+import com.pokemones.pokemonbuilder.data.DbProvider;
 import com.pokemones.pokemonbuilder.data.AppDbHelper;
 import com.pokemones.pokemonbuilder.models.TeamPokemon;
 import com.pokemones.pokemonbuilder.utils.AudioUtils;
@@ -26,7 +26,13 @@ import com.pokemones.pokemonbuilder.utils.PermissionUtils;
 
 import org.json.JSONObject;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class EditPokemonActivity extends AppCompatActivity {
+    private static final int REQ_TAKE_PHOTO = 2002;
+    private static final int REQ_MOVE_BASE = 3000;
+
     private String pokemonName;
     private ImageView ivSprite;
     private ImageView ivCryPlay;
@@ -39,17 +45,16 @@ public class EditPokemonActivity extends AppCompatActivity {
     private TeamPokemon currentTp;
     private AppDbHelper db;
 
-    private static final int REQ_TAKE_PHOTO = 2002;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_pokemon);
 
-        // Pedimos permisos si no están (por si el usuario rechazó en login)
         PermissionUtils.requestCameraAndAudioPermissions(this);
 
-        db = new AppDbHelper(this);
+        db = DbProvider.get(this);
         pokemonName = getIntent().getStringExtra("pokemonName");
 
         tvName = findViewById(R.id.tvPokemonName);
@@ -77,9 +82,38 @@ public class EditPokemonActivity extends AppCompatActivity {
         moveButtons[2] = findViewById(R.id.move2);
         moveButtons[3] = findViewById(R.id.move3);
 
-        tvName.setText(pokemonName);
+        tvName.setText(pokemonName != null ? pokemonName : "");
 
-        // Inicializar currentTp si la actividad fue abierta para editar un slot de equipo
+        Button btnSave = findViewById(R.id.btnSavePokemon);
+        btnSave.setOnClickListener(v -> {
+            try {
+                // Asegurar que currentTp tiene teamId/slot si vienen en extras
+                if (currentTp == null) currentTp = new TeamPokemon();
+                if (currentTp.teamId <= 0) currentTp.teamId = getIntent().getLongExtra("teamId", currentTp.teamId);
+                if (currentTp.slot < 0) currentTp.slot = getIntent().getIntExtra("slot", currentTp.slot);
+                if (currentTp.pokemonName == null) currentTp.pokemonName = pokemonName;
+
+                persistCurrentTp();
+
+                if (currentTp.teamId <= 0 || currentTp.slot < 0) {
+                    Toast.makeText(this, "Guardado local (sin team/slot válidos)", Toast.LENGTH_SHORT).show();
+                    setResult(RESULT_CANCELED);
+                    finish();
+                    return;
+                }
+
+                Intent res = new Intent();
+                res.putExtra("teamId", currentTp.teamId);
+                res.putExtra("slot", currentTp.slot);
+                res.putExtra("pokemonName", currentTp.pokemonName);
+                setResult(RESULT_OK, res);
+                finish();
+            } catch (Exception ex) {
+                Toast.makeText(this, "Error al guardar: " + ex.getMessage(), Toast.LENGTH_LONG).show();
+                android.util.Log.e("EditPokemonActivity", "Error al guardar pokemon", ex);
+            }
+        });
+
         long teamId = getIntent().getLongExtra("teamId", -1);
         int slot = getIntent().getIntExtra("slot", -1);
         if (teamId != -1 && slot >= 0) {
@@ -92,16 +126,20 @@ public class EditPokemonActivity extends AppCompatActivity {
                 long id = db.saveTeamPokemon(currentTp);
                 if (id > 0) currentTp.id = id;
             } else {
-                // mostrar sprite local si existe
                 if (currentTp.customSpritePath != null && !currentTp.customSpritePath.isEmpty()) {
                     Bitmap b = ImageUtils.loadBitmapFromPath(currentTp.customSpritePath);
                     if (b != null) ivSprite.setImageBitmap(b);
                 }
+                populateUiFromCurrentTp();
             }
+        } else {
+            if (currentTp == null) currentTp = new TeamPokemon();
+            if (currentTp.evs == null) currentTp.evs = new int[6];
+            if (currentTp.ivs == null) currentTp.ivs = new int[6];
+            if (currentTp.moves == null) currentTp.moves = new String[4];
         }
 
         ivSprite.setOnClickListener(v -> {
-            // Verificamos permisos de cámara antes de abrir
             if (!PermissionUtils.hasAllPermissions(EditPokemonActivity.this)) {
                 PermissionUtils.requestCameraAndAudioPermissions(EditPokemonActivity.this);
                 Toast.makeText(this, "Concede permisos para usar la cámara", Toast.LENGTH_SHORT).show();
@@ -118,14 +156,13 @@ public class EditPokemonActivity extends AppCompatActivity {
         });
 
         btnRecordCry.setOnClickListener(v -> {
-            // Verificamos permisos de audio antes de grabar
             if (!PermissionUtils.hasAllPermissions(EditPokemonActivity.this)) {
                 PermissionUtils.requestCameraAndAudioPermissions(EditPokemonActivity.this);
                 Toast.makeText(this, "Concede permisos de audio para grabar", Toast.LENGTH_SHORT).show();
                 return;
             }
             if (!AudioUtils.isRecording()) {
-                String path = AudioUtils.startRecording(this, "cry_" + pokemonName);
+                String path = AudioUtils.startRecording(this, "cry_" + (pokemonName != null ? pokemonName : "unknown"));
                 if (path == null) {
                     Toast.makeText(this, "No se pudo iniciar la grabación", Toast.LENGTH_SHORT).show();
                 } else {
@@ -136,7 +173,6 @@ public class EditPokemonActivity extends AppCompatActivity {
                 AudioUtils.stopRecording();
                 btnRecordCry.setText("Grabar grito");
                 Toast.makeText(this, "Grabación guardada", Toast.LENGTH_SHORT).show();
-                // guardar ruta en currentTp si aplica
                 if (currentTp != null) {
                     currentTp.cryPath = AudioUtils.getLastPath();
                     long savedId = db.saveTeamPokemon(currentTp);
@@ -151,64 +187,113 @@ public class EditPokemonActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, MoveSelectionActivity.class);
                 intent.putExtra("pokemonName", pokemonName);
                 intent.putExtra("moveIndex", idx);
-                startActivityForResult(intent, 3000 + idx);
+                startActivityForResult(intent, REQ_MOVE_BASE + idx);
             });
         }
 
-        new LoadPokemonTask().execute(pokemonName);
+        loadPokemonFromApi(pokemonName);
+    }
+
+    private void populateUiFromCurrentTp() {
+        if (currentTp == null) return;
+        if (currentTp.evs == null) currentTp.evs = new int[6];
+        if (currentTp.ivs == null) currentTp.ivs = new int[6];
+        if (currentTp.moves == null) currentTp.moves = new String[4];
+
+        for (int i = 0; i < 6; i++) {
+            evSeek[i].setProgress(currentTp.evs != null && i < currentTp.evs.length ? currentTp.evs[i] : 0);
+            ivSeek[i].setProgress(currentTp.ivs != null && i < currentTp.ivs.length ? currentTp.ivs[i] : 0);
+        }
+        for (int i = 0; i < 4; i++) {
+            String m = currentTp.moves != null && i < currentTp.moves.length ? currentTp.moves[i] : null;
+            moveButtons[i].setText(m == null ? "Movimiento " + (i + 1) : m);
+        }
+    }
+
+    private void loadPokemonFromApi(String name) {
+        executor.execute(() -> {
+            try {
+                JSONObject p = PokeApiClient.getPokemon(name);
+                if (p == null) return;
+                String spriteUrl = PokeApiClient.getDefaultSprite(p);
+                String[] abilities = PokeApiClient.getAbilities(p);
+                String[] moves = PokeApiClient.getMoves(p);
+
+                runOnUiThread(() -> {
+                    if (spriteUrl != null) ImageUtils.loadImageIntoImageView(EditPokemonActivity.this, ivSprite, spriteUrl);
+                    if (abilities != null && abilities.length > 0) {
+                        ArrayAdapter<String> a = new ArrayAdapter<>(EditPokemonActivity.this, android.R.layout.simple_spinner_item, abilities);
+                        a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        spinnerAbilities.setAdapter(a);
+                        if (currentTp != null && currentTp.ability != null) {
+                            for (int i = 0; i < abilities.length; i++) {
+                                if (currentTp.ability.equals(abilities[i])) {
+                                    spinnerAbilities.setSelection(i);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    for (int i = 0; i < 4; i++) {
+                        if (moves != null && i < moves.length) moveButtons[i].setText(moves[i]);
+                        else moveButtons[i].setText("Movimiento " + (i + 1));
+                    }
+                });
+            } catch (Exception ignored) {}
+        });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode >= 3000 && requestCode < 3004 && resultCode == RESULT_OK && data != null) {
+        if (requestCode >= REQ_MOVE_BASE && requestCode < REQ_MOVE_BASE + 4 && resultCode == RESULT_OK && data != null) {
             String move = data.getStringExtra("selectedMove");
-            int idx = requestCode - 3000;
-            moveButtons[idx].setText(move);
+            int idx = requestCode - REQ_MOVE_BASE;
+            if (idx >= 0 && idx < 4 && move != null) moveButtons[idx].setText(move);
         } else if (requestCode == REQ_TAKE_PHOTO && resultCode == RESULT_OK && data != null) {
             Bundle extras = data.getExtras();
             if (extras != null) {
                 Bitmap photo = (Bitmap) extras.get("data");
-                ivSprite.setImageBitmap(photo);
-                String path = ImageUtils.saveBitmapToCache(this, photo, "sprite_" + pokemonName);
-                if (currentTp != null) {
-                    currentTp.customSpritePath = path;
-                    long savedId = db.saveTeamPokemon(currentTp);
-                    if (savedId > 0) currentTp.id = savedId;
+                if (photo != null) {
+                    ivSprite.setImageBitmap(photo);
+                    String path = ImageUtils.saveBitmapToCache(this, photo, "sprite_" + (pokemonName != null ? pokemonName : "unknown"));
+                    if (currentTp != null) {
+                        currentTp.customSpritePath = path;
+                        long savedId = db.saveTeamPokemon(currentTp);
+                        if (savedId > 0) currentTp.id = savedId;
+                    }
                 }
             }
         }
     }
 
-    private class LoadPokemonTask extends AsyncTask<String, Void, JSONObject> {
-        @Override
-        protected JSONObject doInBackground(String... params) {
-            try {
-                return PokeApiClient.getPokemon(params[0]);
-            } catch (Exception e) {
-                return null;
-            }
+    private void persistCurrentTp() {
+        if (currentTp == null) return;
+
+        if (currentTp.evs == null) currentTp.evs = new int[6];
+        if (currentTp.ivs == null) currentTp.ivs = new int[6];
+        if (currentTp.moves == null) currentTp.moves = new String[4];
+
+        for (int i = 0; i < 6; i++) currentTp.evs[i] = evSeek[i].getProgress();
+        for (int i = 0; i < 6; i++) currentTp.ivs[i] = ivSeek[i].getProgress();
+        for (int i = 0; i < 4; i++) {
+            String txt = moveButtons[i].getText().toString();
+            currentTp.moves[i] = txt.startsWith("Movimiento ") ? null : txt;
         }
+        if (spinnerAbilities.getSelectedItem() != null) currentTp.ability = (String) spinnerAbilities.getSelectedItem();
 
-        @Override
-        protected void onPostExecute(JSONObject p) {
-            if (p == null) return;
-            String spriteUrl = PokeApiClient.getDefaultSprite(p);
-            String[] abilities = PokeApiClient.getAbilities(p);
-            String[] moves = PokeApiClient.getMoves(p);
-
-            if (spriteUrl != null) ImageUtils.loadImageIntoImageView(EditPokemonActivity.this, ivSprite, spriteUrl);
-
-            if (abilities != null && abilities.length > 0) {
-                ArrayAdapter<String> a = new ArrayAdapter<>(EditPokemonActivity.this, android.R.layout.simple_spinner_item, abilities);
-                a.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-                spinnerAbilities.setAdapter(a);
-            }
-
-            for (int i = 0; i < 4; i++) {
-                if (moves != null && i < moves.length) moveButtons[i].setText(moves[i]);
-                else moveButtons[i].setText("Movimiento " + (i + 1));
-            }
+        try {
+            long savedId = db.saveTeamPokemon(currentTp);
+            if (savedId > 0) currentTp.id = savedId;
+            else android.util.Log.w("EditPokemonActivity", "saveTeamPokemon returned " + savedId);
+        } catch (Exception e) {
+            android.util.Log.e("EditPokemonActivity", "persistCurrentTp error", e);
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        persistCurrentTp();
     }
 }
