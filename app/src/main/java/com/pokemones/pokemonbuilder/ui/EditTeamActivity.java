@@ -4,6 +4,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -15,6 +17,7 @@ import com.pokemones.pokemonbuilder.api.PokeApiClient;
 import com.pokemones.pokemonbuilder.data.DbProvider;
 import com.pokemones.pokemonbuilder.data.AppDbHelper;
 import com.pokemones.pokemonbuilder.models.TeamPokemon;
+import com.pokemones.pokemonbuilder.models.Team; // asegúrate de tener este modelo
 import com.pokemones.pokemonbuilder.utils.ImageUtils;
 
 import org.json.JSONObject;
@@ -31,6 +34,10 @@ public class EditTeamActivity extends AppCompatActivity {
 
     private AppDbHelper db;
     private long teamId;
+    private Team currentTeam;
+
+    private EditText etTeamName;
+    private Button btnSaveTeam;
     private ImageButton[] slotButtons = new ImageButton[6]; // ajustar si tienes más/menos slots
 
     @Override
@@ -40,11 +47,9 @@ public class EditTeamActivity extends AppCompatActivity {
 
         db = DbProvider.get(this);
         teamId = getIntent().getLongExtra("teamId", -1);
-        if (teamId <= 0) {
-            Toast.makeText(this, "Team inválido", Toast.LENGTH_LONG).show();
-            finish();
-            return;
-        }
+
+        etTeamName = findViewById(R.id.etTeamName);
+        btnSaveTeam = findViewById(R.id.btnSaveTeam);
 
         slotButtons[0] = findViewById(R.id.slot0);
         slotButtons[1] = findViewById(R.id.slot1);
@@ -53,10 +58,28 @@ public class EditTeamActivity extends AppCompatActivity {
         slotButtons[4] = findViewById(R.id.slot4);
         slotButtons[5] = findViewById(R.id.slot5);
 
+        if (teamId <= 0) {
+            Toast.makeText(this, "Team inválido", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        // Cargar equipo desde DB y mostrar nombre
+        loadTeam();
+
+        // Listeners de slots: si ya hay pokemon -> abrir editor, si no -> abrir pokedex
         for (int i = 0; i < slotButtons.length; i++) {
             final int slot = i;
             slotButtons[i].setOnClickListener(v -> {
-                Log.d(TAG, "Abrir Pokedex para slot=" + slot + " teamId=" + teamId);
+                TeamPokemon existing = db.getTeamPokemonBySlot(teamId, slot);
+                if (existing != null && (existing.pokemonName != null || existing.id > 0)) {
+                    Intent edit = new Intent(EditTeamActivity.this, EditPokemonActivity.class);
+                    edit.putExtra("teamId", teamId);
+                    edit.putExtra("slot", slot);
+                    if (existing.pokemonName != null) edit.putExtra("pokemonName", existing.pokemonName);
+                    startActivityForResult(edit, REQ_EDIT_POKEMON + slot);
+                    return;
+                }
                 Intent it = new Intent(EditTeamActivity.this, PokedexActivity.class);
                 it.putExtra("fromTeamEdit", true);
                 it.putExtra("slot", slot);
@@ -65,13 +88,44 @@ public class EditTeamActivity extends AppCompatActivity {
             });
         }
 
+        // Guardar nombre del equipo y volver a TeamsActivity
+        btnSaveTeam.setOnClickListener(v -> {
+            saveTeamNameAndReturn();
+        });
+
         refreshAllSlots();
     }
 
-    private void refreshAllSlots() {
-        for (int i = 0; i < slotButtons.length; i++) {
-            loadSlotImage(i);
+    private void loadTeam() {
+        currentTeam = db.getTeamById(teamId);
+        if (currentTeam == null) {
+            // Si no existe, crear uno nuevo con este id (opcional)
+            currentTeam = new Team();
+            currentTeam.id = teamId;
         }
+        etTeamName.setText(currentTeam.name != null ? currentTeam.name : "");
+    }
+
+    private void saveTeamNameAndReturn() {
+        String name = etTeamName.getText().toString().trim();
+        if (name.isEmpty()) {
+            Toast.makeText(this, "El nombre del equipo no puede estar vacío", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        currentTeam.name = name;
+        long id = db.saveTeam(currentTeam); // asegúrate de que AppDbHelper tiene saveTeam(Team)
+        if (id > 0) currentTeam.id = id;
+
+        // Devolver resultado a la actividad que abrió EditTeamActivity (por ejemplo TeamsActivity)
+        Intent res = new Intent();
+        res.putExtra("teamId", currentTeam.id);
+        res.putExtra("teamName", currentTeam.name);
+        setResult(RESULT_OK, res);
+        finish();
+    }
+
+    private void refreshAllSlots() {
+        for (int i = 0; i < slotButtons.length; i++) loadSlotImage(i);
     }
 
     private void loadSlotImage(int slot) {
@@ -120,7 +174,7 @@ public class EditTeamActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         Log.d(TAG, "onActivityResult rc=" + requestCode + " rr=" + resultCode);
 
-        // Manejo de retorno desde PokedexActivity (selección de Pokémon)
+        // Resultado desde Pokedex (selección)
         int baseSelect = REQ_SELECT_FROM_POKEDEX;
         if (requestCode >= baseSelect && requestCode < baseSelect + slotButtons.length) {
             int selectedSlot = requestCode - baseSelect;
@@ -128,8 +182,6 @@ public class EditTeamActivity extends AppCompatActivity {
                 String selected = data.getStringExtra("selectedPokemon");
                 int returnedSlot = data.getIntExtra("slot", selectedSlot);
                 long returnedTeamId = data.getLongExtra("teamId", teamId);
-
-                Log.d(TAG, "Pokedex returned selected=" + selected + " returnedSlot=" + returnedSlot + " returnedTeamId=" + returnedTeamId);
 
                 if (returnedTeamId == teamId && returnedSlot >= 0 && returnedSlot < slotButtons.length && selected != null) {
                     TeamPokemon tp = db.getTeamPokemonBySlot(teamId, returnedSlot);
@@ -148,7 +200,7 @@ public class EditTeamActivity extends AppCompatActivity {
 
                     loadSlotImage(returnedSlot);
 
-                    // Abrir editor inmediatamente para editar detalles (opcional)
+                    // Abrir editor para detalles (opcional)
                     Intent edit = new Intent(this, EditPokemonActivity.class);
                     edit.putExtra("teamId", teamId);
                     edit.putExtra("slot", returnedSlot);
@@ -164,7 +216,7 @@ public class EditTeamActivity extends AppCompatActivity {
             }
         }
 
-        // Manejo de retorno desde EditPokemonActivity (si lo abres con REQ_EDIT_POKEMON)
+        // Resultado desde EditPokemonActivity
         int baseEdit = REQ_EDIT_POKEMON;
         if (requestCode >= baseEdit && requestCode < baseEdit + slotButtons.length) {
             int editedSlot = requestCode - baseEdit;
