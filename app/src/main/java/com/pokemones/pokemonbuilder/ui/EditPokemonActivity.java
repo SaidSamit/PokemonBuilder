@@ -26,8 +26,6 @@ import com.pokemones.pokemonbuilder.utils.PermissionUtils;
 
 import org.json.JSONObject;
 
-import java.io.IOException;
-
 public class EditPokemonActivity extends AppCompatActivity {
     private String pokemonName;
     private ImageView ivSprite;
@@ -81,6 +79,27 @@ public class EditPokemonActivity extends AppCompatActivity {
 
         tvName.setText(pokemonName);
 
+        // Inicializar currentTp si la actividad fue abierta para editar un slot de equipo
+        long teamId = getIntent().getLongExtra("teamId", -1);
+        int slot = getIntent().getIntExtra("slot", -1);
+        if (teamId != -1 && slot >= 0) {
+            currentTp = db.getTeamPokemonBySlot(teamId, slot);
+            if (currentTp == null) {
+                currentTp = new TeamPokemon();
+                currentTp.teamId = teamId;
+                currentTp.slot = slot;
+                currentTp.pokemonName = pokemonName;
+                long id = db.saveTeamPokemon(currentTp);
+                if (id > 0) currentTp.id = id;
+            } else {
+                // mostrar sprite local si existe
+                if (currentTp.customSpritePath != null && !currentTp.customSpritePath.isEmpty()) {
+                    Bitmap b = ImageUtils.loadBitmapFromPath(currentTp.customSpritePath);
+                    if (b != null) ivSprite.setImageBitmap(b);
+                }
+            }
+        }
+
         ivSprite.setOnClickListener(v -> {
             // Verificamos permisos de cámara antes de abrir
             if (!PermissionUtils.hasAllPermissions(EditPokemonActivity.this)) {
@@ -117,6 +136,12 @@ public class EditPokemonActivity extends AppCompatActivity {
                 AudioUtils.stopRecording();
                 btnRecordCry.setText("Grabar grito");
                 Toast.makeText(this, "Grabación guardada", Toast.LENGTH_SHORT).show();
+                // guardar ruta en currentTp si aplica
+                if (currentTp != null) {
+                    currentTp.cryPath = AudioUtils.getLastPath();
+                    long savedId = db.saveTeamPokemon(currentTp);
+                    if (savedId > 0) currentTp.id = savedId;
+                }
             }
         });
 
@@ -148,7 +173,8 @@ public class EditPokemonActivity extends AppCompatActivity {
                 String path = ImageUtils.saveBitmapToCache(this, photo, "sprite_" + pokemonName);
                 if (currentTp != null) {
                     currentTp.customSpritePath = path;
-                    db.saveTeamPokemon(currentTp);
+                    long savedId = db.saveTeamPokemon(currentTp);
+                    if (savedId > 0) currentTp.id = savedId;
                 }
             }
         }

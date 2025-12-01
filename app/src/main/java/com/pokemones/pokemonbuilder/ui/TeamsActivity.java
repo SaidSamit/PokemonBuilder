@@ -40,6 +40,7 @@ public class TeamsActivity extends AppCompatActivity {
             if (id > 0) {
                 Intent i = new Intent(this, EditTeamActivity.class);
                 i.putExtra("teamId", id);
+                i.putExtra("userId", userId);
                 startActivity(i);
             } else {
                 Toast.makeText(this, "No se pudo crear el equipo", Toast.LENGTH_SHORT).show();
@@ -50,6 +51,7 @@ public class TeamsActivity extends AppCompatActivity {
             Team t = teams.get(position);
             Intent i = new Intent(this, EditTeamActivity.class);
             i.putExtra("teamId", t.id);
+            i.putExtra("userId", userId);
             startActivity(i);
         });
     }
