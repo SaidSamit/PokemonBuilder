@@ -21,6 +21,10 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Muestra todos los Pokémon ordenados por generación (1..N).
+ * Por defecto carga todas las generaciones que devuelve la API en orden.
+ */
 public class SortByGenerationActivity extends AppCompatActivity {
     private ListView lv;
     private ArrayAdapter<String> adapter;
@@ -30,6 +34,7 @@ public class SortByGenerationActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sort_by_generation);
+
         lv = findViewById(R.id.lvGeneration);
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, names);
         lv.setAdapter(adapter);
@@ -41,8 +46,8 @@ public class SortByGenerationActivity extends AppCompatActivity {
             startActivity(i);
         });
 
-        // Carga por defecto: generación 1 (puedes cambiar UI para elegir generación)
-        new LoadGenerationTask().execute("1");
+        // Carga por defecto: todas las generaciones en orden
+        new LoadAllGenerationsTask().execute();
     }
 
     @Override
@@ -65,29 +70,54 @@ public class SortByGenerationActivity extends AppCompatActivity {
         new SearchPokemonTask().execute(name);
     }
 
-    private class LoadGenerationTask extends AsyncTask<String, Void, List<String>> {
-        @Override protected List<String> doInBackground(String... params) {
-            String gen = params[0];
+    /**
+     * Carga todas las generaciones listadas por la API y concatena sus pokemon_species
+     * en orden de generación (1,2,3,...). Usa el endpoint /generation/{id}.
+     */
+    private class LoadAllGenerationsTask extends AsyncTask<Void, Void, List<String>> {
+        @Override protected List<String> doInBackground(Void... voids) {
             List<String> out = new ArrayList<>();
             try {
-                JSONObject g = PokeApiClient.getGeneration(gen);
-                // generation endpoint returns "pokemon_species" array
-                JSONArray arr = g.getJSONArray("pokemon_species");
-                for (int i = 0; i < arr.length(); i++) {
-                    JSONObject obj = arr.getJSONObject(i);
-                    out.add(obj.getString("name"));
+                // Primero obtener la lista de generaciones desde la API: /generation
+                // PokeApiClient no tiene getAllGenerations, así que pedimos por índices hasta que falle.
+                // Alternativa: podrías llamar a "generation" con ids conocidos (1..8). Aquí intentamos 1..20 y paramos cuando falla.
+                for (int gen = 1; gen <= 20; gen++) {
+                    try {
+                        JSONObject g = PokeApiClient.getGeneration(String.valueOf(gen));
+                        if (g == null) break;
+                        JSONArray arr = g.optJSONArray("pokemon_species");
+                        if (arr == null) continue;
+                        // pokemon_species viene sin orden por número; para mantener orden por número podríamos parsear y ordenar,
+                        // pero aquí añadimos en el orden que devuelve la API (suele ser alfabético).
+                        for (int i = 0; i < arr.length(); i++) {
+                            JSONObject obj = arr.getJSONObject(i);
+                            out.add(obj.getString("name"));
+                        }
+                    } catch (Exception e) {
+                        // si falla para un gen concreto, asumimos que no hay más generaciones y rompemos
+                        break;
+                    }
                 }
-            } catch (Exception e) { }
+            } catch (Exception e) {
+                // si algo falla devolvemos lo que tengamos
+            }
             return out;
         }
+
         @Override protected void onPostExecute(List<String> result) {
+            if (result == null || result.isEmpty()) {
+                Toast.makeText(SortByGenerationActivity.this, "No se pudieron cargar generaciones", Toast.LENGTH_SHORT).show();
+                return;
+            }
             names.clear();
             names.addAll(result);
             adapter.notifyDataSetChanged();
-            if (names.isEmpty()) Toast.makeText(SortByGenerationActivity.this, "No se encontraron Pokémon", Toast.LENGTH_SHORT).show();
         }
     }
 
+    /**
+     * Busca un Pokémon por nombre y lo muestra (reemplaza la lista por el resultado).
+     */
     private class SearchPokemonTask extends AsyncTask<String, Void, String> {
         @Override protected String doInBackground(String... params) {
             try {
@@ -100,6 +130,8 @@ public class SortByGenerationActivity extends AppCompatActivity {
                 names.clear();
                 names.add(s);
                 adapter.notifyDataSetChanged();
+            } else {
+                Toast.makeText(SortByGenerationActivity.this, "Pokémon no encontrado", Toast.LENGTH_SHORT).show();
             }
         }
     }

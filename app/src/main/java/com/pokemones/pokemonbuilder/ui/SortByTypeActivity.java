@@ -19,8 +19,15 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+/**
+ * Muestra todos los Pokémon ordenados por tipo.
+ * Por defecto obtiene la lista de tipos y concatena los Pokémon de cada tipo en ese orden,
+ * evitando duplicados (un Pokémon aparece en el primer tipo en el que aparece).
+ */
 public class SortByTypeActivity extends AppCompatActivity {
     private ListView lv;
     private ArrayAdapter<String> adapter;
@@ -30,6 +37,7 @@ public class SortByTypeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sort_by_type);
+
         lv = findViewById(R.id.lvType);
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, names);
         lv.setAdapter(adapter);
@@ -41,8 +49,8 @@ public class SortByTypeActivity extends AppCompatActivity {
             startActivity(i);
         });
 
-        // Carga por defecto: tipo "normal" (puedes cambiar UI para elegir tipo)
-        new LoadTypeTask().execute("normal");
+        // Carga por defecto: todos los tipos y sus pokémon en orden
+        new LoadAllTypesTask().execute();
     }
 
     @Override
@@ -65,25 +73,50 @@ public class SortByTypeActivity extends AppCompatActivity {
         new SearchPokemonTask().execute(name);
     }
 
-    private class LoadTypeTask extends AsyncTask<String, Void, List<String>> {
-        @Override protected List<String> doInBackground(String... params) {
-            String type = params[0];
+    /**
+     * Obtiene la lista de tipos desde /type (pide por índices 1..n) y para cada tipo obtiene su lista de pokémon.
+     * Evita duplicados usando un Set.
+     */
+    private class LoadAllTypesTask extends AsyncTask<Void, Void, List<String>> {
+        @Override protected List<String> doInBackground(Void... voids) {
             List<String> out = new ArrayList<>();
+            Set<String> seen = new HashSet<>();
             try {
-                JSONObject t = PokeApiClient.getType(type);
-                JSONArray arr = t.getJSONArray("pokemon");
-                for (int i = 0; i < arr.length(); i++) {
-                    JSONObject obj = arr.getJSONObject(i).getJSONObject("pokemon");
-                    out.add(obj.getString("name"));
+                // Intentamos pedir tipos por id hasta que falle (p. ej. 1..100)
+                for (int t = 1; t <= 100; t++) {
+                    try {
+                        JSONObject typeObj = PokeApiClient.getType(String.valueOf(t));
+                        if (typeObj == null) break;
+                        // cada type devuelve "pokemon": [{pokemon:{name, url}, slot:...}, ...]
+                        JSONArray arr = typeObj.optJSONArray("pokemon");
+                        if (arr == null) continue;
+                        for (int i = 0; i < arr.length(); i++) {
+                            JSONObject entry = arr.getJSONObject(i).getJSONObject("pokemon");
+                            String name = entry.getString("name");
+                            if (!seen.contains(name)) {
+                                seen.add(name);
+                                out.add(name);
+                            }
+                        }
+                    } catch (Exception e) {
+                        // si falla para un id concreto, asumimos que no hay más tipos y rompemos
+                        break;
+                    }
                 }
-            } catch (Exception e) { }
+            } catch (Exception e) {
+                // ignore
+            }
             return out;
         }
+
         @Override protected void onPostExecute(List<String> result) {
+            if (result == null || result.isEmpty()) {
+                Toast.makeText(SortByTypeActivity.this, "No se pudieron cargar tipos", Toast.LENGTH_SHORT).show();
+                return;
+            }
             names.clear();
             names.addAll(result);
             adapter.notifyDataSetChanged();
-            if (names.isEmpty()) Toast.makeText(SortByTypeActivity.this, "No se encontraron Pokémon", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -99,6 +132,8 @@ public class SortByTypeActivity extends AppCompatActivity {
                 names.clear();
                 names.add(s);
                 adapter.notifyDataSetChanged();
+            } else {
+                Toast.makeText(SortByTypeActivity.this, "Pokémon no encontrado", Toast.LENGTH_SHORT).show();
             }
         }
     }
