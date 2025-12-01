@@ -137,6 +137,62 @@ public class AppDbHelper extends SQLiteOpenHelper {
         db.update("teams", cv, "id = ?", new String[]{String.valueOf(teamId)});
     }
 
+    /**
+     * Devuelve un Team por id o null si no existe.
+     */
+    public Team getTeamById(long id) {
+        if (id <= 0) return null;
+        Team team = null;
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query("teams", null, "id = ?", new String[]{String.valueOf(id)}, null, null, null);
+        try {
+            if (c.moveToFirst()) {
+                team = new Team();
+                team.id = c.getLong(c.getColumnIndexOrThrow("id"));
+                // user_id puede no existir en algunos esquemas; comprobar antes de leer
+                try {
+                    team.userId = c.getLong(c.getColumnIndexOrThrow("user_id"));
+                } catch (Exception ignored) {}
+                team.name = c.getString(c.getColumnIndexOrThrow("name"));
+            }
+        } finally {
+            if (c != null) c.close();
+        }
+        return team;
+    }
+
+    /**
+     * Inserta o actualiza un Team. Devuelve id (nuevo o existente) o -1 en error.
+     */
+    public long saveTeam(Team team) {
+        if (team == null) return -1;
+        SQLiteDatabase db = getWritableDatabase();
+        long resultId = -1;
+        ContentValues cv = new ContentValues();
+        cv.put("name", team.name);
+        // si tienes userId en el modelo, incluirlo si es válido
+        if (team.userId > 0) cv.put("user_id", team.userId);
+
+        try {
+            if (team.id > 0) {
+                int rows = db.update("teams", cv, "id = ?", new String[]{String.valueOf(team.id)});
+                if (rows > 0) {
+                    resultId = team.id;
+                } else {
+                    // si no actualizó (por si no existe), insertar
+                    resultId = db.insert("teams", null, cv);
+                }
+            } else {
+                resultId = db.insert("teams", null, cv);
+            }
+            if (resultId > 0) team.id = resultId;
+        } catch (Exception e) {
+            android.util.Log.e("AppDbHelper", "saveTeam error", e);
+            resultId = -1;
+        }
+        return resultId;
+    }
+
     // -------------------------
     // TeamPokemon CRUD
     // -------------------------
