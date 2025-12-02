@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="@dimen/spacing_md"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_dark">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tvPokemonName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:textColor="@color/text_primary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnChangePokemon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cambiar Pokémon"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:textAllCaps="false"
+            app:backgroundTint="?attr/colorPrimary"
+            android:textColor="@color/on_primary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnResetSprite"
+            android:layout_width="157dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:text="Quitar foto personalizada"
+            android:textAllCaps="false"
+            app:backgroundTint="@color/surface_variant"
+            android:textColor="@color/text_primary" />
+
+        <ImageView
+            android:id="@+id/ivSprite"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:contentDescription="Sprite"
+            android:background="@android:color/transparent"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop"
+            android:foreground="?attr/selectableItemBackgroundBorderless" />
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/ivCryPlay"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:contentDescription="Reproducir grito"
+                android:src="@android:drawable/ic_media_play"
+                android:foreground="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRecordCry"
+                android:text="Grabar grito"
+                android:layout_marginStart="@dimen/spacing_sm"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAllCaps="false"
+                app:backgroundTint="?attr/colorPrimary"
+                android:textColor="@color/on_primary" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Habilidad"
+            android:layout_marginTop="@dimen/spacing_md"
+            android:textColor="@color/text_primary" />
+
+        <Spinner
+            android:id="@+id/spinnerAbilities"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:text="EVs"
+            android:layout_marginTop="@dimen/spacing_md"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_primary" />
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <SeekBar
+                android:id="@+id/ev0"
+                android:max="252"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <SeekBar
+                android:id="@+id/ev1"
+                android:max="252"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <SeekBar
+                android:id="@+id/ev2"
+                android:max="252"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <SeekBar
+                android:id="@+id/ev3"
+                android:max="252"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <SeekBar
+                android:id="@+id/ev4"
+                android:max="252"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <SeekBar
+                android:id="@+id/ev5"
+                android:max="252"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <TextView
+            android:text="IVs"
+            android:layout_marginTop="@dimen/spacing_md"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_primary" />
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <SeekBar
+                android:id="@+id/iv0"
+                android:max="31"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <SeekBar
+                android:id="@+id/iv1"
+                android:max="31"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <SeekBar
+                android:id="@+id/iv2"
+                android:max="31"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <SeekBar
+                android:id="@+id/iv3"
+                android:max="31"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <SeekBar
+                android:id="@+id/iv4"
+                android:max="31"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <SeekBar
+                android:id="@+id/iv5"
+                android:max="31"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <TextView
+            android:text="Movimientos"
+            android:layout_marginTop="@dimen/spacing_md"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_primary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/move0"
+            android:text="Movimiento 1"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAllCaps="false"
+            app:backgroundTint="@color/surface_variant"
+            android:textColor="@color/text_primary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/move1"
+            android:text="Movimiento 2"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAllCaps="false"
+            app:backgroundTint="@color/surface_variant"
+            android:textColor="@color/text_primary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/move2"
+            android:text="Movimiento 3"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAllCaps="false"
+            app:backgroundTint="@color/surface_variant"
+            android:textColor="@color/text_primary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/move3"
+            android:text="Movimiento 4"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAllCaps="false"
+            app:backgroundTint="@color/surface_variant"
+            android:textColor="@color/text_primary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSavePokemon"
+            android:text="Guardar Pokémon"
+            android:layout_marginTop="@dimen/spacing_lg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAllCaps="false"
+            app:backgroundTint="?attr/colorPrimary"
+            android:textColor="@color/on_primary" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDeletePokemon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Eliminar Pokémon del equipo"
+            android:layout_marginTop="@dimen/spacing_sm"
+            android:textAllCaps="false"
+            app:backgroundTint="@android:color/holo_red_light"
+            android:textColor="@color/on_primary" />
+
+    </LinearLayout>
+</ScrollView>

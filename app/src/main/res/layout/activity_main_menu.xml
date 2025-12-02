@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="@dimen/spacing_lg"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_dark">
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnTeams"
+        android:text="Equipos"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:textColor="@color/on_primary"
+        app:cornerRadius="@dimen/card_radius"
+        app:backgroundTint="?attr/colorPrimary" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnPokedex"
+        android:text="Pokedex"
+        android:layout_marginTop="@dimen/spacing_md"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:textAllCaps="false"
+        android:textColor="@color/text_primary"
+        app:cornerRadius="@dimen/card_radius"
+        app:backgroundTint="@color/surface_variant" />
+
+</LinearLayout>
