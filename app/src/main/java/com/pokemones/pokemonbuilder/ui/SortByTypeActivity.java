@@ -3,11 +3,11 @@ package com.pokemones.pokemonbuilder.ui;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.SearchView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -23,15 +23,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Muestra todos los Pokémon ordenados por tipo.
- * Por defecto obtiene la lista de tipos y concatena los Pokémon de cada tipo en ese orden,
- * evitando duplicados (un Pokémon aparece en el primer tipo en el que aparece).
- */
 public class SortByTypeActivity extends AppCompatActivity {
+    private static final String TAG = "SortByTypeActivity";
+
     private ListView lv;
     private ArrayAdapter<String> adapter;
     private List<String> names = new ArrayList<>();
+
+    // Si viene desde edición de equipo, devolvemos la selección con slot/teamId
+    private boolean fromTeamEdit = false;
+    private int slot = -1;
+    private long teamId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +44,24 @@ public class SortByTypeActivity extends AppCompatActivity {
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, names);
         lv.setAdapter(adapter);
 
+        fromTeamEdit = getIntent().getBooleanExtra("fromTeamEdit", false);
+        slot = getIntent().getIntExtra("slot", -1);
+        teamId = getIntent().getLongExtra("teamId", -1);
+
         lv.setOnItemClickListener((parent, view, position, id) -> {
             String selected = names.get(position);
+            Log.d(TAG, "Seleccionado: " + selected + " fromTeamEdit=" + fromTeamEdit + " slot=" + slot + " teamId=" + teamId);
+
+            if (fromTeamEdit) {
+                Intent res = new Intent();
+                res.putExtra("selectedPokemon", selected);
+                res.putExtra("slot", slot);
+                res.putExtra("teamId", teamId);
+                setResult(RESULT_OK, res);
+                finish();
+                return;
+            }
+
             Intent i = new Intent(this, EditPokemonActivity.class);
             i.putExtra("pokemonName", selected);
             startActivity(i);
@@ -55,17 +73,27 @@ public class SortByTypeActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_pokedex, menu);
+        try {
+            getMenuInflater().inflate(R.menu.menu_pokedex, menu);
+        } catch (Exception e) {
+            Log.w(TAG, "No se pudo inflar menu_pokedex: " + e.getMessage());
+        }
+
+        androidx.appcompat.widget.SearchView sv = null;
         MenuItem searchItem = menu.findItem(R.id.action_search);
-        androidx.appcompat.widget.SearchView sv = (androidx.appcompat.widget.SearchView) searchItem.getActionView();
-        sv.setQueryHint("Buscar por nombre");
-        sv.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
-            @Override public boolean onQueryTextSubmit(String query) {
-                searchByName(query);
-                return true;
-            }
-            @Override public boolean onQueryTextChange(String newText) { return false; }
-        });
+        if (searchItem != null) {
+            sv = (androidx.appcompat.widget.SearchView) searchItem.getActionView();
+        }
+        if (sv != null) {
+            sv.setQueryHint("Buscar por nombre");
+            sv.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
+                @Override public boolean onQueryTextSubmit(String query) {
+                    searchByName(query);
+                    return true;
+                }
+                @Override public boolean onQueryTextChange(String newText) { return false; }
+            });
+        }
         return true;
     }
 
@@ -73,21 +101,15 @@ public class SortByTypeActivity extends AppCompatActivity {
         new SearchPokemonTask().execute(name);
     }
 
-    /**
-     * Obtiene la lista de tipos desde /type (pide por índices 1..n) y para cada tipo obtiene su lista de pokémon.
-     * Evita duplicados usando un Set.
-     */
     private class LoadAllTypesTask extends AsyncTask<Void, Void, List<String>> {
         @Override protected List<String> doInBackground(Void... voids) {
             List<String> out = new ArrayList<>();
             Set<String> seen = new HashSet<>();
             try {
-                // Intentamos pedir tipos por id hasta que falle (p. ej. 1..100)
                 for (int t = 1; t <= 100; t++) {
                     try {
                         JSONObject typeObj = PokeApiClient.getType(String.valueOf(t));
                         if (typeObj == null) break;
-                        // cada type devuelve "pokemon": [{pokemon:{name, url}, slot:...}, ...]
                         JSONArray arr = typeObj.optJSONArray("pokemon");
                         if (arr == null) continue;
                         for (int i = 0; i < arr.length(); i++) {
@@ -99,12 +121,11 @@ public class SortByTypeActivity extends AppCompatActivity {
                             }
                         }
                     } catch (Exception e) {
-                        // si falla para un id concreto, asumimos que no hay más tipos y rompemos
                         break;
                     }
                 }
             } catch (Exception e) {
-                // ignore
+                Log.w(TAG, "Error cargando tipos", e);
             }
             return out;
         }
