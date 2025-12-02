@@ -1,35 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:padding="8dp"
+    android:padding="@dimen/spacing_md"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/background_dark">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:titleTextColor="@android:color/white"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:layout_marginBottom="8dp">
+        android:layout_marginTop="@dimen/spacing_sm"
+        android:layout_marginBottom="@dimen/spacing_sm">
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnByGeneration"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Ordenar por generación" />
+            android:text="Ordenar por generación"
+            android:textAllCaps="false"
+            app:cornerRadius="@dimen/card_radius"
+            app:backgroundTint="?attr/colorPrimary"
+            android:textColor="@color/on_primary" />
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnByType"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="8dp"
-            android:text="Ordenar por tipo" />
+            android:layout_marginStart="@dimen/spacing_sm"
+            android:text="Ordenar por tipo"
+            android:textAllCaps="false"
+            app:cornerRadius="@dimen/card_radius"
+            app:backgroundTint="@color/surface_variant"
+            android:textColor="@color/text_primary" />
     </LinearLayout>
 
     <ListView
         android:id="@+id/lvPokedex"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@color/divider"
+        android:dividerHeight="1dp"
+        android:listSelector="@drawable/list_selector"
+        android:paddingTop="@dimen/spacing_sm"
+        android:clipToPadding="false" />
+
 </LinearLayout>
