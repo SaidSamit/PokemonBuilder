@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- Paleta principal -->
+    <color name="primary_blue">#1e4167</color>
+    <color name="surface_dark">#383838</color>
+    <color name="muted_gray">#5a5a5a</color>
+
+    <!-- Soporte y contraste -->
+    <color name="on_primary">#FFFFFF</color>
+    <color name="background_dark">#121212</color>
+    <color name="surface_variant">#2B2B2B</color>
+    <color name="divider">#2E2E2E</color>
+    <color name="text_primary">#EDEDED</color>
+    <color name="text_secondary">#BDBDBD</color>
 </resources>
+
