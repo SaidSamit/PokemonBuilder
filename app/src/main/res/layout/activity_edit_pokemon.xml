@@ -15,6 +15,21 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
+        <Button
+            android:id="@+id/btnChangePokemon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cambiar Pokémon"
+            android:layout_marginTop="8dp"/>
+
+        <Button
+            android:id="@+id/btnResetSprite"
+            android:layout_width="157dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Quitar foto personalizada" />
+
+
         <ImageView
             android:id="@+id/ivSprite"
             android:layout_marginTop="8dp"
@@ -71,7 +86,16 @@
         <Button android:id="@+id/move2" android:text="Movimiento 3" android:layout_marginTop="6dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
         <Button android:id="@+id/move3" android:text="Movimiento 4" android:layout_marginTop="6dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
 
+
         <Button android:id="@+id/btnSavePokemon" android:text="Guardar Pokémon" android:layout_marginTop="16dp" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+        <Button
+            android:id="@+id/btnDeletePokemon"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Eliminar Pokémon del equipo"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@android:color/holo_red_light"/>
+
 
     </LinearLayout>
 </ScrollView>

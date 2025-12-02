@@ -10,6 +10,7 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.pokemones.pokemonbuilder.R;
@@ -17,7 +18,7 @@ import com.pokemones.pokemonbuilder.api.PokeApiClient;
 import com.pokemones.pokemonbuilder.data.DbProvider;
 import com.pokemones.pokemonbuilder.data.AppDbHelper;
 import com.pokemones.pokemonbuilder.models.TeamPokemon;
-import com.pokemones.pokemonbuilder.models.Team; // asegúrate de tener este modelo
+import com.pokemones.pokemonbuilder.models.Team;
 import com.pokemones.pokemonbuilder.utils.ImageUtils;
 
 import org.json.JSONObject;
@@ -38,7 +39,11 @@ public class EditTeamActivity extends AppCompatActivity {
 
     private EditText etTeamName;
     private Button btnSaveTeam;
+    private Button btnDeleteTeam;
     private ImageButton[] slotButtons = new ImageButton[6]; // ajustar si tienes más/menos slots
+
+    // URL del sprite por defecto (Poké Ball)
+    private static final String DEFAULT_EMPTY_SLOT_SPRITE = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +55,7 @@ public class EditTeamActivity extends AppCompatActivity {
 
         etTeamName = findViewById(R.id.etTeamName);
         btnSaveTeam = findViewById(R.id.btnSaveTeam);
+        btnDeleteTeam = findViewById(R.id.btnDeleteTeam);
 
         slotButtons[0] = findViewById(R.id.slot0);
         slotButtons[1] = findViewById(R.id.slot1);
@@ -74,6 +80,7 @@ public class EditTeamActivity extends AppCompatActivity {
                 TeamPokemon existing = db.getTeamPokemonBySlot(teamId, slot);
                 if (existing != null && (existing.pokemonName != null || existing.id > 0)) {
                     Intent edit = new Intent(EditTeamActivity.this, EditPokemonActivity.class);
+                    edit.putExtra("fromTeamEdit", true);
                     edit.putExtra("teamId", teamId);
                     edit.putExtra("slot", slot);
                     if (existing.pokemonName != null) edit.putExtra("pokemonName", existing.pokemonName);
@@ -89,8 +96,31 @@ public class EditTeamActivity extends AppCompatActivity {
         }
 
         // Guardar nombre del equipo y volver a TeamsActivity
-        btnSaveTeam.setOnClickListener(v -> {
-            saveTeamNameAndReturn();
+        btnSaveTeam.setOnClickListener(v -> saveTeamNameAndReturn());
+
+        // Botón eliminar equipo con confirmación
+        btnDeleteTeam.setOnClickListener(v -> {
+            if (teamId <= 0) {
+                Toast.makeText(EditTeamActivity.this, "Team inválido", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            new AlertDialog.Builder(EditTeamActivity.this)
+                    .setTitle("Eliminar equipo")
+                    .setMessage("¿Estás seguro que deseas eliminar este equipo? Esta acción eliminará también los Pokémon asignados y no se puede deshacer.")
+                    .setPositiveButton("Eliminar", (dialog, which) -> {
+                        boolean ok = db.deleteTeamById(teamId);
+                        if (ok) {
+                            Toast.makeText(EditTeamActivity.this, "Equipo eliminado", Toast.LENGTH_SHORT).show();
+                            Intent res = new Intent();
+                            res.putExtra("deletedTeamId", teamId);
+                            setResult(RESULT_OK, res);
+                            finish();
+                        } else {
+                            Toast.makeText(EditTeamActivity.this, "No se pudo eliminar el equipo", Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .setNegativeButton("Cancelar", null)
+                    .show();
         });
 
         refreshAllSlots();
@@ -128,45 +158,59 @@ public class EditTeamActivity extends AppCompatActivity {
         for (int i = 0; i < slotButtons.length; i++) loadSlotImage(i);
     }
 
+    /**
+     * Carga la imagen del slot:
+     * - Si existe customSpritePath y es válido, lo muestra.
+     * - Si existe pokemonName, carga el sprite por defecto del Pokémon desde la API.
+     * - Si no hay Pokémon en el slot, muestra la Poké Ball por defecto (DEFAULT_EMPTY_SLOT_SPRITE).
+     */
     private void loadSlotImage(int slot) {
         TeamPokemon tp = db.getTeamPokemonBySlot(teamId, slot);
-        if (tp == null || (tp.customSpritePath == null && tp.pokemonName == null)) {
-            slotButtons[slot].setImageResource(android.R.drawable.ic_menu_gallery);
+        final ImageButton btn = slotButtons[slot];
+
+        // Caso: no hay registro o no hay nombre ni sprite personalizado -> mostrar Poké Ball por defecto
+        if (tp == null || (tp.customSpritePath == null && (tp.pokemonName == null || tp.pokemonName.isEmpty()))) {
+            // Intentar cargar la Poké Ball remota en el botón
+            ImageUtils.loadImageIntoButtonFromUrl(this, btn, DEFAULT_EMPTY_SLOT_SPRITE);
             return;
         }
 
+        // Si hay sprite personalizado, intentar cargarlo desde archivo local
         if (tp.customSpritePath != null && !tp.customSpritePath.isEmpty()) {
             Bitmap b = ImageUtils.loadBitmapFromPath(tp.customSpritePath);
             if (b != null) {
-                slotButtons[slot].setImageBitmap(b);
+                btn.setImageBitmap(b);
                 return;
             }
+            // si falla la carga local, continuar y tratar de cargar sprite por nombre o fallback
         }
 
+        // Si hay nombre de Pokémon, obtener sprite por defecto desde la API en background
         if (tp.pokemonName != null && !tp.pokemonName.isEmpty()) {
             final String name = tp.pokemonName;
-            final ImageButton btn = slotButtons[slot];
             executor.execute(() -> {
                 try {
                     JSONObject p = PokeApiClient.getPokemon(name);
                     if (p == null) {
-                        runOnUiThread(() -> btn.setImageResource(android.R.drawable.ic_menu_report_image));
+                        // fallback a Poké Ball si la API no responde
+                        runOnUiThread(() -> ImageUtils.loadImageIntoButtonFromUrl(EditTeamActivity.this, btn, DEFAULT_EMPTY_SLOT_SPRITE));
                         return;
                     }
                     String spriteUrl = PokeApiClient.getDefaultSprite(p);
                     if (spriteUrl != null && !spriteUrl.isEmpty()) {
                         runOnUiThread(() -> ImageUtils.loadImageIntoButtonFromUrl(EditTeamActivity.this, btn, spriteUrl));
                     } else {
-                        runOnUiThread(() -> btn.setImageResource(android.R.drawable.ic_menu_report_image));
+                        runOnUiThread(() -> ImageUtils.loadImageIntoButtonFromUrl(EditTeamActivity.this, btn, DEFAULT_EMPTY_SLOT_SPRITE));
                     }
                 } catch (Exception e) {
-                    runOnUiThread(() -> btn.setImageResource(android.R.drawable.ic_menu_report_image));
+                    runOnUiThread(() -> ImageUtils.loadImageIntoButtonFromUrl(EditTeamActivity.this, btn, DEFAULT_EMPTY_SLOT_SPRITE));
                 }
             });
             return;
         }
 
-        slotButtons[slot].setImageResource(android.R.drawable.ic_menu_gallery);
+        // Fallback final: Poké Ball
+        ImageUtils.loadImageIntoButtonFromUrl(this, btn, DEFAULT_EMPTY_SLOT_SPRITE);
     }
 
     @Override
@@ -200,8 +244,9 @@ public class EditTeamActivity extends AppCompatActivity {
 
                     loadSlotImage(returnedSlot);
 
-                    // Abrir editor para detalles (opcional)
+                    // Abrir editor para detalles (opcional) — pasar fromTeamEdit para evitar diálogo de borrador
                     Intent edit = new Intent(this, EditPokemonActivity.class);
+                    edit.putExtra("fromTeamEdit", true);
                     edit.putExtra("teamId", teamId);
                     edit.putExtra("slot", returnedSlot);
                     edit.putExtra("pokemonName", selected);

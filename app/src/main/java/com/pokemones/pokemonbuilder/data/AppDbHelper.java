@@ -242,6 +242,56 @@ public class AppDbHelper extends SQLiteOpenHelper {
         }
     }
 
+    // Borra el TeamPokemon para un teamId y slot específicos. Devuelve true si se borró alguna fila.
+    public boolean deleteTeamPokemonBySlot(long teamId, int slot) {
+        try {
+            SQLiteDatabase db = getWritableDatabase();
+            int deleted = db.delete("team_pokemons", "team_id = ? AND slot = ?", new String[]{String.valueOf(teamId), String.valueOf(slot)});
+            return deleted > 0;
+        } catch (Exception e) {
+            android.util.Log.e("AppDbHelper", "deleteTeamPokemonBySlot error", e);
+            return false;
+        }
+    }
+
+    // Borra un equipo por id. Devuelve true si se eliminó el equipo.
+    public boolean deleteTeamById(long teamId) {
+        if (teamId <= 0) return false;
+        SQLiteDatabase db = null;
+        try {
+            db = getWritableDatabase();
+            db.beginTransaction();
+            // Asegurar eliminación de team_pokemons relacionados (si tu esquema tiene ON DELETE CASCADE esto es redundante)
+            db.delete("team_pokemons", "team_id = ?", new String[]{ String.valueOf(teamId) });
+            int deleted = db.delete("teams", "id = ?", new String[]{ String.valueOf(teamId) });
+            db.setTransactionSuccessful();
+            return deleted > 0;
+        } catch (Exception e) {
+            android.util.Log.e("AppDbHelper", "deleteTeamById error", e);
+            return false;
+        } finally {
+            if (db != null) {
+                try { db.endTransaction(); } catch (Exception ignored) {}
+            }
+        }
+    }
+
+
+    // Limpia únicamente el custom_sprite_path para un teamId/slot (no borra el registro).
+    public boolean clearCustomSpriteForSlot(long teamId, int slot) {
+        try {
+            SQLiteDatabase db = getWritableDatabase();
+            ContentValues cv = new ContentValues();
+            cv.putNull("custom_sprite_path");
+            int updated = db.update("team_pokemons", cv, "team_id = ? AND slot = ?", new String[]{String.valueOf(teamId), String.valueOf(slot)});
+            return updated > 0;
+        } catch (Exception e) {
+            android.util.Log.e("AppDbHelper", "clearCustomSpriteForSlot error", e);
+            return false;
+        }
+    }
+
+
     public List<TeamPokemon> getTeamPokemons(long teamId) {
         List<TeamPokemon> out = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
