@@ -1,20 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:padding="12dp"
+    android:padding="@dimen/spacing_md"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/background_dark">
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnAddTeam"
-        android:text="+ Nuevo equipo"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:text="+ Nuevo equipo"
+        android:textAllCaps="false"
+        android:textColor="@color/on_primary"
+        app:backgroundTint="?attr/colorPrimary"
+        app:cornerRadius="@dimen/card_radius"
+        android:layout_marginBottom="@dimen/spacing_sm" />
 
     <ListView
         android:id="@+id/lvTeams"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="@dimen/spacing_sm"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@color/divider"
+        android:dividerHeight="1dp"
+        android:listSelector="@drawable/list_selector"
+        android:paddingTop="@dimen/spacing_sm"
+        android:clipToPadding="false" />
 
 </LinearLayout>

@@ -11,6 +11,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import com.pokemones.pokemonbuilder.R;
 import com.pokemones.pokemonbuilder.api.PokeApiClient;
@@ -39,6 +40,10 @@ public class SortByTypeActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sort_by_type);
+
+        // Registrar toolbar para que el menu se muestre (tema NoActionBar)
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        if (toolbar != null) setSupportActionBar(toolbar);
 
         lv = findViewById(R.id.lvType);
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, names);
@@ -79,33 +84,39 @@ public class SortByTypeActivity extends AppCompatActivity {
             Log.w(TAG, "No se pudo inflar menu_pokedex: " + e.getMessage());
         }
 
-        androidx.appcompat.widget.SearchView sv = null;
         MenuItem searchItem = menu.findItem(R.id.action_search);
         if (searchItem != null) {
-            sv = (androidx.appcompat.widget.SearchView) searchItem.getActionView();
-        }
-        if (sv != null) {
-            sv.setQueryHint("Buscar por nombre");
-            sv.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
-                @Override public boolean onQueryTextSubmit(String query) {
-                    searchByName(query);
-                    return true;
-                }
-                @Override public boolean onQueryTextChange(String newText) { return false; }
-            });
+            androidx.appcompat.widget.SearchView sv = (androidx.appcompat.widget.SearchView) searchItem.getActionView();
+            if (sv != null) {
+                sv.setQueryHint("Buscar por nombre");
+                sv.setOnQueryTextListener(new androidx.appcompat.widget.SearchView.OnQueryTextListener() {
+                    @Override public boolean onQueryTextSubmit(String query) {
+                        searchByName(query);
+                        searchItem.collapseActionView();
+                        return true;
+                    }
+                    @Override public boolean onQueryTextChange(String newText) { return false; }
+                });
+            }
         }
         return true;
     }
 
     private void searchByName(String name) {
+        if (name == null || name.trim().isEmpty()) return;
         new SearchPokemonTask().execute(name);
     }
 
+    /**
+     * Carga todos los tipos y agrega los nombres de Pokémon sin duplicados.
+     */
     private class LoadAllTypesTask extends AsyncTask<Void, Void, List<String>> {
-        @Override protected List<String> doInBackground(Void... voids) {
+        @Override
+        protected List<String> doInBackground(Void... voids) {
             List<String> out = new ArrayList<>();
             Set<String> seen = new HashSet<>();
             try {
+                // Iteramos tipos por id; si la API devuelve null rompemos
                 for (int t = 1; t <= 100; t++) {
                     try {
                         JSONObject typeObj = PokeApiClient.getType(String.valueOf(t));
@@ -121,6 +132,7 @@ public class SortByTypeActivity extends AppCompatActivity {
                             }
                         }
                     } catch (Exception e) {
+                        Log.w(TAG, "Error cargando tipo id=" + t + " : " + e.getMessage());
                         break;
                     }
                 }
@@ -130,7 +142,8 @@ public class SortByTypeActivity extends AppCompatActivity {
             return out;
         }
 
-        @Override protected void onPostExecute(List<String> result) {
+        @Override
+        protected void onPostExecute(List<String> result) {
             if (result == null || result.isEmpty()) {
                 Toast.makeText(SortByTypeActivity.this, "No se pudieron cargar tipos", Toast.LENGTH_SHORT).show();
                 return;
@@ -141,14 +154,23 @@ public class SortByTypeActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Busca un Pokémon por nombre usando PokeApiClient.getPokemon
+     */
     private class SearchPokemonTask extends AsyncTask<String, Void, String> {
-        @Override protected String doInBackground(String... params) {
+        @Override
+        protected String doInBackground(String... params) {
             try {
                 JSONObject p = PokeApiClient.getPokemon(params[0].toLowerCase());
-                return p.getString("name");
-            } catch (Exception e) { return null; }
+                if (p != null) return p.getString("name");
+            } catch (Exception e) {
+                Log.w(TAG, "searchByName error: " + e.getMessage());
+            }
+            return null;
         }
-        @Override protected void onPostExecute(String s) {
+
+        @Override
+        protected void onPostExecute(String s) {
             if (s != null) {
                 names.clear();
                 names.add(s);

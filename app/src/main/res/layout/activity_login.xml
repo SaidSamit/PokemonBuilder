@@ -1,44 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:padding="24dp"
+    android:padding="@dimen/spacing_lg"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/background_dark">
 
     <TextView
         android:id="@+id/tvLoginTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="Iniciar sesión"
-        android:textSize="24sp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:textAppearance="@style/TextAppearance.App.Headline"
+        android:textColor="@color/text_primary" />
 
-    <EditText
-        android:id="@+id/etUser"
-        android:hint="Usuario"
-        android:layout_marginTop="16dp"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_lg"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="@color/primary_blue"
+        app:boxCornerRadiusTopStart="8dp"
+        app:boxCornerRadiusTopEnd="8dp"
+        app:boxCornerRadiusBottomStart="8dp"
+        app:boxCornerRadiusBottomEnd="8dp">
 
-    <EditText
-        android:id="@+id/etPass"
-        android:hint="Contraseña"
-        android:inputType="textPassword"
-        android:layout_marginTop="8dp"
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etUser"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="Usuario"
+            android:inputType="text"
+            android:padding="@dimen/spacing_sm"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing_md"
+        app:boxBackgroundMode="outline"
+        app:boxStrokeColor="@color/primary_blue"
+        app:boxCornerRadiusTopStart="8dp"
+        app:boxCornerRadiusTopEnd="8dp"
+        app:boxCornerRadiusBottomStart="8dp"
+        app:boxCornerRadiusBottomEnd="8dp">
 
-    <Button
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etPass"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:hint="Contraseña"
+            android:inputType="textPassword"
+            android:padding="@dimen/spacing_sm"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_secondary" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnLogin"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="@dimen/spacing_lg"
         android:text="Iniciar sesión"
-        android:layout_marginTop="16dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:textAllCaps="false"
+        android:textColor="@color/on_primary"
+        app:cornerRadius="@dimen/card_radius"
+        app:backgroundTint="?attr/colorPrimary" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnRegister"
-        android:text="Crear usuario"
-        android:layout_marginTop="8dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="48dp"
+        android:layout_marginTop="@dimen/spacing_sm"
+        android:text="Crear usuario"
+        android:textAllCaps="false"
+        android:textColor="@color/text_primary"
+        app:cornerRadius="@dimen/card_radius"
+        app:backgroundTint="@color/surface_variant" />
 
 </LinearLayout>

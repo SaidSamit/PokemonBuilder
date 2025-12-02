@@ -1,18 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:padding="8dp"
+    android:padding="@dimen/spacing_md"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/background_dark">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:titleTextColor="@android:color/white"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
     <TextView
         android:id="@+id/tvTypeTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:text="Selecciona tipo (ej: fire, water, grass)"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:textAppearance="@style/TextAppearance.App.Subtitle"
+        android:textColor="@color/text_primary"
+        android:paddingBottom="@dimen/spacing_sm" />
 
     <ListView
         android:id="@+id/lvType"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@color/divider"
+        android:dividerHeight="1dp"
+        android:listSelector="@drawable/list_selector"
+        android:paddingTop="@dimen/spacing_sm"
+        android:clipToPadding="false" />
+
 </LinearLayout>
